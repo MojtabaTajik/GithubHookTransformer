@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace GithubHookTransformer.Models;
+namespace GithubHookTransformer.Models.GithubPayloads;
 
 public class GithubWebHookPayload
 {
