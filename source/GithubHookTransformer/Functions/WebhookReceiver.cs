@@ -16,8 +16,8 @@ public static class WebhookReceiver
     public static async Task<IActionResult> RunAsync(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
     {
-        log.LogInformation("C# HTTP trigger function processed a request.");
-
+        log.LogInformation("Github Webhook received a request.");
+    
         // Read the request body
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
         
