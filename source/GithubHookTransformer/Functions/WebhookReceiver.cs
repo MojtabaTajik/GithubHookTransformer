@@ -45,6 +45,11 @@ public class WebhookReceiver(IHttpCallerService httpCallerService)
     private async Task<IActionResult> ProcessPullRequestEvent(string payloadString, ILogger log)
     {
         var pullRequestPayload = JsonConvert.DeserializeObject<GithubPullRequestPayload>(payloadString);
+        if (pullRequestPayload.action != "opened")
+        {
+            log.LogInformation("Pull request action is not 'opened', ignoring.");
+            return new OkObjectResult("Pull request action is not 'opened', ignoring.");
+        }
 
         var notificationPayload = new MicrosoftTeamsPayload().GeneratePayload(
             pullRequestPayload.pull_request.title,
@@ -54,12 +59,19 @@ public class WebhookReceiver(IHttpCallerService httpCallerService)
             pullRequestPayload.pull_request.created_at.ToShortDateString(),
             pullRequestPayload.pull_request.body?.ToString(),
             pullRequestPayload.pull_request.html_url);
-        
-        await httpCallerService.PostPayloadAsync(
-            "https://wiggertroamler.webhook.office.com/webhookb2/d36dca86-925f-4161-b997-add42c05dd69@26723dba-9aaf-4167-bb0b-b37edc22e442/IncomingWebhook/be72571b0b04484d83ae455ec96b08be/a213c4ac-7ba7-47f4-9b9b-f1cfeec7d357",
-            notificationPayload);
 
+        var webhookUrl = GetProperWebhookUrl(pullRequestPayload.repository.name);
+        await httpCallerService.PostPayloadAsync(webhookUrl, notificationPayload);
 
         return new OkObjectResult(pullRequestPayload);
+    }
+
+    private string GetProperWebhookUrl(string repoName)
+    {
+        var repoNameLower = repoName.ToLower();
+        var repoNameEnvValue = Environment.GetEnvironmentVariable(repoNameLower);
+        return string.IsNullOrEmpty(repoNameEnvValue)
+            ? Environment.GetEnvironmentVariable("DefaultWebhookUrl")
+            : repoNameEnvValue;
     }
 }
