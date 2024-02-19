@@ -16,7 +16,7 @@ public class Startup : FunctionsStartup
 
     public override void ConfigureAppConfiguration(IFunctionsConfigurationBuilder builder)
     {
-/*#if DEBUG
+#if DEBUG
         var assemblyPath = Assembly.GetExecutingAssembly().Location;
         var localConfigPath = Path.Combine(Path.GetDirectoryName(assemblyPath) ?? string.Empty, "local.settings.json");
 
@@ -28,13 +28,13 @@ public class Startup : FunctionsStartup
         Config = builder.ConfigurationBuilder
             .AddEnvironmentVariables()
             .Build();
-#endif*/
+#endif
     }
 
     public override void Configure(IFunctionsHostBuilder builder)
     {
         Config = builder.GetContext().Configuration;
-        
+
         builder.Services.AddSingleton(Config);
         builder.Services.AddHttpClient();
         builder.Services.AddTransient<IHttpCallerService, HttpCallerService>();
