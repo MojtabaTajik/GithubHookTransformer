@@ -46,21 +46,20 @@ public class WebhookReceiver(IHttpCallerService httpCallerService)
     {
         var pullRequestPayload = JsonConvert.DeserializeObject<GithubPullRequestPayload>(payloadString);
 
-        var notification = new MicrosoftTeamsPayload
-        {
-            Title = pullRequestPayload.pull_request.title,
-            RepoName = pullRequestPayload.repository.name,
-            Author = pullRequestPayload.sender.login,
-            Date = pullRequestPayload.pull_request.created_at.ToShortDateString(),
-            Description = pullRequestPayload.pull_request.body.ToString(),
-            GithubUri = pullRequestPayload.pull_request.html_url,
-        };
+        var notificationPayload = new MicrosoftTeamsPayload().GeneratePayload(
+            pullRequestPayload.pull_request.title,
+            pullRequestPayload.repository.name,
+            pullRequestPayload.sender.login,
+            pullRequestPayload.sender.avatar_url,
+            pullRequestPayload.pull_request.created_at.ToShortDateString(),
+            pullRequestPayload.pull_request.body?.ToString(),
+            pullRequestPayload.pull_request.html_url);
+        
+        await httpCallerService.PostPayloadAsync(
+            "https://wiggertroamler.webhook.office.com/webhookb2/d36dca86-925f-4161-b997-add42c05dd69@26723dba-9aaf-4167-bb0b-b37edc22e442/IncomingWebhook/be72571b0b04484d83ae455ec96b08be/a213c4ac-7ba7-47f4-9b9b-f1cfeec7d357",
+            notificationPayload);
 
-        string payload = notification.GeneratePayload();
-    
-        await httpCallerService.PostPayloadAsync("https://wiggertroamler.webhook.office.com/webhookb2/d36dca86-925f-4161-b997-add42c05dd69@26723dba-9aaf-4167-bb0b-b37edc22e442/IncomingWebhook/be72571b0b04484d83ae455ec96b08be/a213c4ac-7ba7-47f4-9b9b-f1cfeec7d357", payload);
-        
-        
+
         return new OkObjectResult(pullRequestPayload);
     }
 }

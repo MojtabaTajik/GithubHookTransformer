@@ -17,6 +17,7 @@ public class HttpCallerService : IHttpCallerService
     public async Task PostPayloadAsync(string url, string jsonPayload)
     {
         var httpClient = _httpClientFactory.CreateClient();
+        httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
         try

@@ -1,53 +1,76 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 
 namespace GithubHookTransformer.Models.Transforms;
 
 public class MicrosoftTeamsPayload
 {
-    public string Title { get; set; }
-    public string RepoName { get; set; }
-    public string Author { get; set; }
-    public string Date { get; set; }
-    public string Description { get; set; }
-    public string GithubUri { get; set; }
+    [JsonProperty("@type")] public string Type { get; } = "MessageCard";
 
-    public string GeneratePayload()
+    [JsonProperty("@context")] public string Context { get; } = "http://schema.org/extensions";
+
+    public string ThemeColor { get; } = "0076D7";
+    public string Summary { get; } = "New Pull Request Notification";
+    public SectionObject[] Sections { get; set; }
+    public PotentialActionObject[] PotentialAction { get; set; }
+
+    public class SectionObject
     {
-        var notification = new
+        public string ActivityTitle { get; set; }
+        public string ActivitySubtitle { get; set; }
+        public string ActivityImage { get; set; }
+        public FactObject[] Facts { get; set; }
+        public bool Markdown { get; } = true;
+    }
+
+    public class FactObject
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
+    }
+
+    public class PotentialActionObject
+    {
+        [JsonProperty("@type")] public string Type { get; } = "OpenUri";
+        public string Name { get; } = "↗️ View on GitHub";
+        public TargetObject[] Targets { get; set; }
+    }
+
+    public class TargetObject
+    {
+        public string Os { get; } = "default";
+        public string Uri { get; set; }
+    }
+    
+    public string GeneratePayload(string title, string repoName, string author, string avatar, string date, string description, string githubUri)
+    {
+        var notification = new MicrosoftTeamsPayload
         {
-            @type = "MessageCard",
-            @context = "http://schema.org/extensions",
-            themeColor = "0076D7",
-            summary = "New Pull Request Notification",
-            sections = new[]
+            Sections = new[]
             {
-                new
+                new SectionObject
                 {
-                    activityTitle = $"New Pull Request: {Title}",
-                    activitySubtitle = $"On {RepoName}, by {Author} on {Date}",
-                    activityImage = "https://adaptivecards.io/content/cats/2.png",
-                    facts = new[]
+                    ActivityTitle = $"🧲 PR [{title}] was created in [{repoName}]",
+                    ActivitySubtitle = $"👨‍💻 {author} - 📅 {date}",
+                    ActivityImage = avatar,
+                    Facts = new[]
                     {
-                        new { name = "Description", value = Description }
-                    },
-                    markdown = true
+                        new FactObject {Name = $"📝 {Environment.NewLine}", Value = description}
+                    }
                 }
             },
-            potentialAction = new[]
+            PotentialAction = new[]
             {
-                new
+                new PotentialActionObject
                 {
-                    @type = "OpenUri",
-                    name = "View on GitHub",
-                    targets = new[]
+                    Targets = new[]
                     {
-                        new { os = "default", uri = GithubUri }
+                        new TargetObject {Uri = githubUri}
                     }
                 }
             }
         };
 
-        return JsonConvert.SerializeObject(notification, Formatting.Indented);
+        return JsonConvert.SerializeObject(notification);
     }
 }
-
