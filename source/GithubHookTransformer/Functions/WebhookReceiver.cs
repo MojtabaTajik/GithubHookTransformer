@@ -73,8 +73,7 @@ public class WebhookReceiver(IHttpCallerService httpCallerService)
 
     private string GetProperWebhookUrl(string repoName)
     {
-        var repoNameLower = repoName.ToLower();
-        var repoNameEnvValue = Environment.GetEnvironmentVariable(repoNameLower);
+        var repoNameEnvValue = Environment.GetEnvironmentVariable(repoName);
         
         if (string.IsNullOrWhiteSpace(repoNameEnvValue))
         {
