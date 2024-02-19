@@ -16,11 +16,16 @@ namespace GithubHookTransformer.Functions;
 
 public class WebhookReceiver(IHttpCallerService httpCallerService)
 {
+    private ILogger _log;
+    
     [FunctionName("WebhookReceiver")]
     public async Task<IActionResult> RunAsync(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]
-        HttpRequest req, ILogger log)
+        HttpRequest req,
+        ILogger log)
     {
+        _log = log;
+        
         var eventTypeString = req.Headers[Consts.Github_Event_Header_Name];
         log.LogInformation("Github Webhook received a request with event type: {eventType}", eventTypeString);
 
@@ -70,8 +75,13 @@ public class WebhookReceiver(IHttpCallerService httpCallerService)
     {
         var repoNameLower = repoName.ToLower();
         var repoNameEnvValue = Environment.GetEnvironmentVariable(repoNameLower);
-        return string.IsNullOrEmpty(repoNameEnvValue)
-            ? Environment.GetEnvironmentVariable("DefaultWebhookUrl")
-            : repoNameEnvValue;
+        
+        if (string.IsNullOrWhiteSpace(repoNameEnvValue))
+        {
+            _log.LogInformation("No environment variable found for repo name: {repoName}, using default webhook url.", repoName);
+            return Environment.GetEnvironmentVariable("DefaultWebhookUrl");
+        }
+        
+        return repoNameEnvValue;
     }
 }
